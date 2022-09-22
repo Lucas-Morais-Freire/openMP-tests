@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <omp.h>
 
-#define THREAD_NUMBER 30
-#define PAD 8
+#define THREAD_NUMBER 4
 
 int main() {
     double start, end;
 
-    double pi = 0.0; double sum[THREAD_NUMBER][PAD];
+    double pi = 0.0;;
     int actual_threads;
     unsigned long numSteps = 175000000;
     double stepSize = 1.0/numSteps;
@@ -18,16 +17,18 @@ int main() {
     #pragma omp parallel
     {
         double x;
+        double temp = 0.0;
         int numThreads = omp_get_num_threads();
         int thrd = omp_get_thread_num();
         if (thrd == 0) actual_threads = numThreads;
 
         for (int i = thrd; i < numSteps; i += numThreads) {
             x = (0.5 + i)*stepSize;
-            sum[thrd][0] += 4.0/(1 + x*x);
+            temp += 4.0/(1 + x*x);
         }
+        #pragma omp atomic
+            pi += temp;
     }
-    for (int i = 0; i < actual_threads; i++) pi += sum[i][0];
     pi *= stepSize;
 
     end = omp_get_wtime();
