@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <omp.h>
 
-#define THREAD_NUMBER 4
+#define THREAD_NUMBER 10
 
 int main() {
     double start, end;
@@ -14,26 +14,13 @@ int main() {
     start = omp_get_wtime();
     omp_set_num_threads(THREAD_NUMBER);
 
-    #pragma omp parallel
-    {
-        double x;
-        double temp = 0.0;
-        int numThreads = omp_get_num_threads();
-        int thrd = omp_get_thread_num();
-        if (thrd == 0) actual_threads = numThreads;
-
-        for (int i = thrd; i < numSteps; i += numThreads) {
-            x = (0.5 + i)*stepSize;
-            temp += 4.0/(1 + x*x);
+    #pragma omp parallel for reduction (+:pi)
+        for (int i = 0; i < numSteps; i++) {
+            pi += 4.0/(1 + (0.5 + i)*stepSize*(0.5 + i)*stepSize);
         }
-        #pragma omp atomic
-            pi += temp;
-    }
     pi *= stepSize;
 
     end = omp_get_wtime();
-
-    printf("threads used: %d\n", actual_threads);
     printf("runtime: %.10fs\n", end - start);
     printf("pi = %.15f\n", pi);
 
